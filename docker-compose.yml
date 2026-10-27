@@ -1,0 +1,47 @@
+# Local development: database and app in containers.
+#   Start:   docker compose up -d --build      → http://localhost:3000
+#   Logs:    docker compose logs -f app
+#   Stop:    docker compose down               (data is kept in the "pgdata" volume)
+#   Reset:   docker compose down -v            (deletes all data)
+# After changing package.json: docker compose up -d --build --renew-anon-volumes
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      # Local-only credentials; DATABASE_URL in .env.example matches them.
+      POSTGRES_USER: crosspost
+      POSTGRES_PASSWORD: crosspost
+      POSTGRES_DB: crosspost_dev
+    ports:
+      # Bound to localhost only, so the database is not reachable from the network.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crosspost -d crosspost_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      # Inside the compose network the database host is "db", not localhost.
+      # Takes precedence over DATABASE_URL in .env; all other settings come from .env.
+      DATABASE_URL: postgresql://crosspost:crosspost@db:5432/crosspost_dev?schema=public
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Source code (including .env) from this folder; edits reload automatically.
+      - .:/app
+      # The container keeps its own Linux node_modules and build output.
+      - /app/node_modules
+      - /app/.next
+
+volumes:
+  pgdata:

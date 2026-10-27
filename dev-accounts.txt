@@ -1,0 +1,38 @@
+CROSSPOST — тестові акаунти для локальної розробки
+====================================================
+
+Адреса входу: http://localhost:3000/login
+
+Адміністратор
+  E-mail:  admin@example.com
+  Пароль:  TestAdmin-2026!
+  Доступ:  Nowy post, Historia, Połączenia, Konto, Zaproszenia
+
+Користувач
+  E-mail:  user@example.com
+  Пароль:  TestUser-2026!
+  Доступ:  Nowy post, Historia, Połączenia, Konto
+
+
+Як створити ці акаунти
+----------------------
+У новій базі їх немає, тож один раз після запуску виконай:
+
+  docker compose exec app npm run db:seed-dev
+
+(без Docker: npm run db:seed-dev)
+
+Повторний запуск скидає паролі до наведених вище.
+Скрипт працює лише локально: якщо APP_URL не http://localhost, він відмовиться.
+
+
+Якщо вхід заблоковано
+---------------------
+Після 5 невдалих спроб вхід блокується на 15 хвилин. Можна зачекати
+або очистити журнал спроб:
+
+  docker compose exec db psql -U crosspost -d crosspost_dev -c 'DELETE FROM "LoginAttempt";'
+
+
+Тільки для розробки. На реальному сервері ці акаунти не створюються,
+а перший адміністратор отримує інвайт-код: npm run admin:invite -- email

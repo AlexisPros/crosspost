@@ -1,0 +1,8 @@
+# Keep the build context small and never bake secrets into the image.
+.git
+.env
+node_modules
+.next
+src/generated
+*.tsbuildinfo
+.DS_Store
